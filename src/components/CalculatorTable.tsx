@@ -15,6 +15,85 @@ interface CalculatorTableProps {
 
 const payTypes: PayType[] = ['Marketing Deal', 'Flat Pay', 'Rookie Pay'];
 const rowTypes: RowType[] = ['Team', 'Individual Rep'];
+const PercentInput = memo(function PercentInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const displayValue = Number((value * 100).toFixed(2));
+
+  return (
+    <input
+      type="number"
+      step="0.01"
+      value={displayValue}
+      onChange={(e) => onChange(Number((Number(e.target.value) / 100).toFixed(4)))}
+    />
+  );
+});
+
+const SummaryTable = memo(function SummaryTable({
+  rows,
+  derivedRows,
+  onRowChange,
+}: {
+  rows: CalculatorRow[];
+  derivedRows: DerivedRowMetrics[];
+  onRowChange: <K extends keyof CalculatorRow>(id: string, key: K, value: CalculatorRow[K]) => void;
+}) {
+  return (
+    <div className="summary-table-card stable-card">
+      <div className="section-heading calculator-summary-heading">
+        <div>
+          <div className="eyebrow">Quick edit summary</div>
+          <h4>Management, revenue, YTD, and rookie pacing</h4>
+        </div>
+        <p className="muted">Edit here or below — both views update the same row data.</p>
+      </div>
+
+      <div className="table-wrap calculator-summary-table-wrap">
+        <table className="calculator-summary-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Vet/Manager Revenue</th>
+              <th>Team Revenue</th>
+              <th>Current YTD</th>
+              <th>Summer Ready Rookies</th>
+              <th>Needed Rookies</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={row.id}>
+                <td>
+                  <input value={row.name} onChange={(e) => onRowChange(row.id, 'name', e.target.value)} />
+                </td>
+                <td>
+                  <input type="number" value={row.managerVeteranRevenue} onChange={(e) => onRowChange(row.id, 'managerVeteranRevenue', Number(e.target.value))} />
+                </td>
+                <td>
+                  <input type="number" value={row.goalRevenue} onChange={(e) => onRowChange(row.id, 'goalRevenue', Number(e.target.value))} />
+                </td>
+                <td>
+                  <input type="number" value={row.currentYtdRevenue} onChange={(e) => onRowChange(row.id, 'currentYtdRevenue', Number(e.target.value))} />
+                </td>
+                <td>
+                  <input type="number" value={row.activeRookieReps} onChange={(e) => onRowChange(row.id, 'activeRookieReps', Number(e.target.value))} />
+                </td>
+                <td>
+                  <div className="readonly emphasis summary-readonly-cell">{derivedRows[index]?.requiredSignedReps ?? 0}</div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+});
 
 const CalculatorRowCard = memo(function CalculatorRowCard({
   row,
@@ -72,7 +151,7 @@ const CalculatorRowCard = memo(function CalculatorRowCard({
           <input type="number" value={row.currentYtdRevenue} onChange={(e) => onRowChange(row.id, 'currentYtdRevenue', Number(e.target.value))} />
         </label>
         <label>
-          Goal Revenue
+          Team Revenue
           <input type="number" value={row.goalRevenue} onChange={(e) => onRowChange(row.id, 'goalRevenue', Number(e.target.value))} />
         </label>
         <label>
@@ -89,15 +168,15 @@ const CalculatorRowCard = memo(function CalculatorRowCard({
         </label>
         <label>
           Signed-to-Start %
-          <input type="number" step="0.01" value={row.signedToStartRatio} onChange={(e) => onRowChange(row.id, 'signedToStartRatio', Number(e.target.value))} />
+          <PercentInput value={row.signedToStartRatio} onChange={(value) => onRowChange(row.id, 'signedToStartRatio', value)} />
         </label>
         <label>
           Start-to-Finish %
-          <input type="number" step="0.01" value={row.startToFinishRatio} onChange={(e) => onRowChange(row.id, 'startToFinishRatio', Number(e.target.value))} />
+          <PercentInput value={row.startToFinishRatio} onChange={(value) => onRowChange(row.id, 'startToFinishRatio', value)} />
         </label>
         <label>
           Retention %
-          <input type="number" step="0.01" value={row.retention} onChange={(e) => onRowChange(row.id, 'retention', Number(e.target.value))} />
+          <PercentInput value={row.retention} onChange={(value) => onRowChange(row.id, 'retention', value)} />
         </label>
         <label>
           Required Finished Reps
@@ -108,20 +187,20 @@ const CalculatorRowCard = memo(function CalculatorRowCard({
           <div className="readonly">{derived.requiredStartedReps}</div>
         </label>
         <label>
-          Required Signed / Summer-Ready Reps
+          Needed Rookies
           <div className="readonly emphasis">{derived.requiredSignedReps}</div>
         </label>
         <label>
-          Active Rookie Reps
+          Summer Ready Rookies
           <input type="number" value={row.activeRookieReps} onChange={(e) => onRowChange(row.id, 'activeRookieReps', Number(e.target.value))} />
         </label>
         <label>
           Their Commission / Deal %
-          <input type="number" step="0.01" value={row.theirDealPercent} onChange={(e) => onRowChange(row.id, 'theirDealPercent', Number(e.target.value))} />
+          <PercentInput value={row.theirDealPercent} onChange={(value) => onRowChange(row.id, 'theirDealPercent', value)} />
         </label>
         <label>
           My Marketing Deal %
-          <input type="number" step="0.01" value={row.myMarketingDealPercent} onChange={(e) => onRowChange(row.id, 'myMarketingDealPercent', Number(e.target.value))} />
+          <PercentInput value={row.myMarketingDealPercent} onChange={(value) => onRowChange(row.id, 'myMarketingDealPercent', value)} />
         </label>
         <label>
           Override %
@@ -164,14 +243,15 @@ export const CalculatorTable = memo(function CalculatorTable({ rows, derivedRows
     <section className="card section-card stable-card">
       <div className="section-heading sticky-header">
         <div>
-          <div className="eyebrow">Page 2</div>
-          <h3>Marketing deal earnings calculator</h3>
-          <p className="muted">No lazy rendering. Static full-page cards with flattened styling for smoother paint.</p>
+          <h3>Team Numbers</h3>
+          <p className="muted">High-level summary at the top, with full row detail underneath.</p>
         </div>
         <button className="primary-button" onClick={onAddRow} type="button">Add row</button>
       </div>
 
       <div className="calculator-card-list">
+        <SummaryTable rows={rows} derivedRows={derivedRows} onRowChange={onRowChange} />
+
         {rows.map((row, index) => (
           <CalculatorRowCard
             key={row.id}

@@ -30,6 +30,14 @@ const primaryFields: { key: keyof GlobalSettings; label: string; type?: 'text' |
   { key: 'defaultManagerVeteranRevenue', label: 'Default Manager/Veteran Revenue Input' },
 ];
 
+const percentageFields = new Set<keyof GlobalSettings>([
+  'managerDealPercentage',
+  'marketingDealFeePercentage',
+  'signedToStartRatio',
+  'startToFinishRatio',
+  'averageRetention',
+]);
+
 export const InputSettings = memo(function InputSettings({ settings, onChange, summary }: InputSettingsProps) {
   const calculatedAccounts = settings.averageValuePerAccount > 0 ? settings.currentYtdRevenue / settings.averageValuePerAccount : 0;
 
@@ -52,14 +60,27 @@ export const InputSettings = memo(function InputSettings({ settings, onChange, s
             {primaryFields.map((field) => {
               const value = settings[field.key];
               const isText = field.type === 'text';
+              const isPercentage = percentageFields.has(field.key);
+              const displayValue = isText
+                ? value
+                : isPercentage
+                  ? Number((Number(value) * 100).toFixed(2))
+                  : value;
               return (
                 <label key={field.key}>
                   {field.label}
                   <input
                     type={isText ? 'text' : 'number'}
                     step={isText ? undefined : '0.01'}
-                    value={value as string | number}
-                    onChange={(event) => onChange(field.key, isText ? event.target.value : Number(event.target.value))}
+                    value={displayValue as string | number}
+                    onChange={(event) => {
+                      if (isText) {
+                        onChange(field.key, event.target.value);
+                        return;
+                      }
+                      const numericValue = Number(event.target.value);
+                      onChange(field.key, (isPercentage ? Number((numericValue / 100).toFixed(4)) : numericValue) as GlobalSettings[keyof GlobalSettings]);
+                    }}
                   />
                 </label>
               );
@@ -84,7 +105,6 @@ export const InputSettings = memo(function InputSettings({ settings, onChange, s
             <div className="stat-row"><span>Net MD percentage after fees</span><strong>{percent(summary.netMdPercentage)}</strong></div>
             <div className="stat-row"><span>Road map revenue</span><strong>{currency(summary.roadmapRevenuePerAccount || settings.roadmapRevenue)}</strong></div>
             <div className="stat-row"><span>Estimated gross earnings</span><strong>{currency(summary.estimatedGrossEarnings)}</strong></div>
-            <div className="stat-row"><span>Imported manager-level costs</span><strong>{currency(summary.globalCostTotal)}</strong></div>
             <div className="stat-row"><span>Estimated earnings after expenses</span><strong className="success">{currency(summary.estimatedAfterExpenses)}</strong></div>
           </div>
         </div>
