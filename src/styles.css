@@ -267,22 +267,23 @@ tr:hover td { background: rgba(255,255,255,0.012); }
   background: var(--panel);
 }
 .compact-topbar {
-  padding-top: 0.8rem;
-  padding-bottom: 0.8rem;
+  padding-top: 1.05rem;
+  padding-bottom: 1.05rem;
 }
 .compact-topbar h1 {
   margin: 0;
-  font-size: 1.7rem;
-  letter-spacing: -0.03em;
+  font-size: 2.35rem;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 .topbar-logo-wrap {
-  width: 128px;
+  width: 180px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 .topbar-logo {
-  width: 120px;
+  width: 170px;
   height: auto;
   object-fit: contain;
 }
@@ -670,14 +671,14 @@ tr:hover td { background: rgba(255,255,255,0.012); }
   .executive-grid,
   .executive-strip,
   .gap-pacing-grid { grid-template-columns: 1fr; }
-  .topbar-logo-wrap { width: 88px; }
-  .topbar-logo { width: 80px; }
+  .topbar-logo-wrap { width: 128px; }
+  .topbar-logo { width: 120px; }
 }
 
 @media (max-width: 640px) {
   .app-shell, .auth-shell { padding: 0.8rem; }
   .sidebar, .topbar, .section-card, .card { border-radius: 18px; }
-  .topbar h1 { font-size: 1.55rem; }
+  .topbar h1 { font-size: 1.9rem; }
   .hero-amount, .metric-value, .inset-amount { font-size: clamp(1.75rem, 9vw, 2.7rem); }
   .scenario-item, .section-heading, .toggle-row, .calculator-row-header, .metric-subline, .backend-plan-stat-row { flex-direction: column; align-items: flex-start; }
   .metric-subline b { font-size: 1rem; }
