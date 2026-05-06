@@ -20,7 +20,6 @@ interface InputSettingsProps {
 
 const primaryFields: { key: keyof GlobalSettings; label: string; type?: 'text' | 'number' }[] = [
   { key: 'managerName', label: 'Manager Name', type: 'text' },
-  { key: 'accounts', label: 'Accounts' },
   { key: 'averageValuePerAccount', label: 'ACV' },
   { key: 'managerDealPercentage', label: 'Manager Marketing Deal Percentage' },
   { key: 'marketingDealFeePercentage', label: 'Marketing Deal Fee Percentage' },
@@ -32,6 +31,8 @@ const primaryFields: { key: keyof GlobalSettings; label: string; type?: 'text' |
 ];
 
 export const InputSettings = memo(function InputSettings({ settings, onChange, summary }: InputSettingsProps) {
+  const calculatedAccounts = settings.averageValuePerAccount > 0 ? settings.currentYtdRevenue / settings.averageValuePerAccount : 0;
+
   return (
     <section className="panel-grid two-col">
       <div className="stack gap-lg">
@@ -44,6 +45,10 @@ export const InputSettings = memo(function InputSettings({ settings, onChange, s
             <p className="muted">Global assumptions imported from your sheet, now editable in one clean place.</p>
           </div>
           <div className="form-grid">
+            <label>
+              Accounts
+              <div className="readonly">{calculatedAccounts.toLocaleString(undefined, { maximumFractionDigits: 1 })}</div>
+            </label>
             {primaryFields.map((field) => {
               const value = settings[field.key];
               const isText = field.type === 'text';
