@@ -29,6 +29,7 @@ export const PotentialMoneyTracker = memo(function PotentialMoneyTracker({ items
                 <th>Name</th>
                 <th>Amount In</th>
                 <th>Status</th>
+                <th>ROI</th>
                 <th>Notes</th>
                 <th />
               </tr>
@@ -39,6 +40,7 @@ export const PotentialMoneyTracker = memo(function PotentialMoneyTracker({ items
                   <td><input value={item.name} onChange={(e) => onItemChange(item.id, 'name', e.target.value)} /></td>
                   <td><input type="number" value={item.amount} onChange={(e) => onItemChange(item.id, 'amount', Number(e.target.value))} /></td>
                   <td><input value={item.status} onChange={(e) => onItemChange(item.id, 'status', e.target.value)} /></td>
+                  <td><input value={item.roi} onChange={(e) => onItemChange(item.id, 'roi', e.target.value)} /></td>
                   <td><input value={item.notes} onChange={(e) => onItemChange(item.id, 'notes', e.target.value)} /></td>
                   <td><button className="text-button danger" type="button" onClick={() => onDeleteItem(item.id)}>Delete</button></td>
                 </tr>

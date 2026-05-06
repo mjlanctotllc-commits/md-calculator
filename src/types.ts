@@ -115,6 +115,7 @@ export interface PotentialMoneyItem {
   amount: number;
   status: string;
   projectedValue: number;
+  roi: string;
   notes: string;
 }
 

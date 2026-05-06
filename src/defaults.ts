@@ -71,6 +71,7 @@ export const createPotentialMoney = (overrides: Partial<PotentialMoneyItem> = {}
   amount: 0,
   status: '',
   projectedValue: 0,
+  roi: '',
   notes: '',
   ...overrides,
 });
