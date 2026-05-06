@@ -47,19 +47,6 @@ export const PotentialMoneyTracker = memo(function PotentialMoneyTracker({ items
           </table>
         </div>
       </div>
-      <div className="card section-card stable-card backend-plan-summary-card">
-        <div className="section-heading">
-          <div>
-            <div className="eyebrow">Upside summary</div>
-            <h3>Potential money snapshot</h3>
-          </div>
-        </div>
-        <div className="stack gap-lg">
-          <div className="stat-row backend-plan-stat-row"><span>Total potential outlay</span><strong>{currency(totalPotentialOutlay)}</strong></div>
-          <div className="stat-row success backend-plan-stat-row"><span>Total potential value</span><strong>{currency(totalPotentialValue)}</strong></div>
-          <div className="stat-row backend-plan-stat-row"><span>Net upside</span><strong>{currency(totalPotentialValue - totalPotentialOutlay)}</strong></div>
-        </div>
-      </div>
     </section>
   );
 });
