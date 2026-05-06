@@ -13,7 +13,7 @@ interface PotentialMoneyTrackerProps {
 
 export const PotentialMoneyTracker = memo(function PotentialMoneyTracker({ items, totalPotentialOutlay, totalPotentialValue, onItemChange, onAddItem, onDeleteItem }: PotentialMoneyTrackerProps) {
   return (
-    <section className="panel-grid two-col">
+    <section className="panel-grid two-col backend-plan-grid">
       <div className="card section-card stable-card">
         <div className="section-heading">
           <div>
@@ -47,7 +47,7 @@ export const PotentialMoneyTracker = memo(function PotentialMoneyTracker({ items
           </table>
         </div>
       </div>
-      <div className="card section-card stable-card">
+      <div className="card section-card stable-card backend-plan-summary-card">
         <div className="section-heading">
           <div>
             <div className="eyebrow">Upside summary</div>
@@ -55,9 +55,9 @@ export const PotentialMoneyTracker = memo(function PotentialMoneyTracker({ items
           </div>
         </div>
         <div className="stack gap-lg">
-          <div className="stat-row"><span>Total potential outlay</span><strong>{currency(totalPotentialOutlay)}</strong></div>
-          <div className="stat-row success"><span>Total potential value</span><strong>{currency(totalPotentialValue)}</strong></div>
-          <div className="stat-row"><span>Net upside</span><strong>{currency(totalPotentialValue - totalPotentialOutlay)}</strong></div>
+          <div className="stat-row backend-plan-stat-row"><span>Total potential outlay</span><strong>{currency(totalPotentialOutlay)}</strong></div>
+          <div className="stat-row success backend-plan-stat-row"><span>Total potential value</span><strong>{currency(totalPotentialValue)}</strong></div>
+          <div className="stat-row backend-plan-stat-row"><span>Net upside</span><strong>{currency(totalPotentialValue - totalPotentialOutlay)}</strong></div>
         </div>
       </div>
     </section>
