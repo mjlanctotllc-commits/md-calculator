@@ -4,6 +4,7 @@ import { ExpenseItem } from '../types';
 interface ExpenseTrackerProps {
   expenses: ExpenseItem[];
   repOptions: string[];
+  canEdit: boolean;
   useManualExpenseTotal: boolean;
   manualExpenseTotal: number;
   onToggleManual: (value: boolean) => void;
@@ -29,6 +30,7 @@ const expenseCategories: ExpenseItem['category'][] = ['Housing', 'Advances'];
 export const ExpenseTracker = memo(function ExpenseTracker({
   expenses,
   repOptions,
+  canEdit,
   useManualExpenseTotal,
   manualExpenseTotal,
   onToggleManual,
@@ -48,7 +50,7 @@ export const ExpenseTracker = memo(function ExpenseTracker({
           <div className="toggle-row">
             <span>Manual total</span>
             <label className="switch">
-              <input type="checkbox" checked={useManualExpenseTotal} onChange={(e) => onToggleManual(e.target.checked)} />
+              <input type="checkbox" checked={useManualExpenseTotal} onChange={(e) => onToggleManual(e.target.checked)} disabled={!canEdit} />
               <span />
             </label>
           </div>
@@ -57,13 +59,13 @@ export const ExpenseTracker = memo(function ExpenseTracker({
         {useManualExpenseTotal ? (
           <label>
             Total expenses manually entered
-            <input type="number" value={manualExpenseTotal} onChange={(e) => onManualChange(Number(e.target.value))} />
+            <input type="number" value={manualExpenseTotal} onChange={(e) => onManualChange(Number(e.target.value))} disabled={!canEdit} />
           </label>
         ) : (
           <>
             <div className="row between wrap">
               <p className="muted">Track housing and advances expenses, and assign each one to a rep in your downline.</p>
-              <button className="primary-button" type="button" onClick={onAddExpense}>Add expense</button>
+              {canEdit ? <button className="primary-button" type="button" onClick={onAddExpense}>Add expense</button> : <div className="muted">View only — only managers can change expenses.</div>}
             </div>
             <div className="stack gap-md">
               {expenses.length === 0 && <div className="muted expense-empty-state">No expenses yet.</div>}
@@ -72,7 +74,7 @@ export const ExpenseTracker = memo(function ExpenseTracker({
                   <div className="expense-line-grid">
                     <label>
                       Category
-                      <select value={expense.category} onChange={(e) => onExpenseChange(expense.id, 'category', e.target.value as ExpenseItem['category'])}>
+                      <select value={expense.category} onChange={(e) => onExpenseChange(expense.id, 'category', e.target.value as ExpenseItem['category'])} disabled={!canEdit}>
                         {expenseCategories.map((category) => (
                           <option key={category} value={category}>{category}</option>
                         ))}
@@ -80,11 +82,11 @@ export const ExpenseTracker = memo(function ExpenseTracker({
                     </label>
                     <label>
                       Amount
-                      <input type="number" value={expense.amount} onChange={(e) => onExpenseChange(expense.id, 'amount', Number(e.target.value))} />
+                      <input type="number" value={expense.amount} onChange={(e) => onExpenseChange(expense.id, 'amount', Number(e.target.value))} disabled={!canEdit} />
                     </label>
                     <label>
                       Assign Rep In Your Downline
-                      <select value={expense.assignedTo} onChange={(e) => onExpenseChange(expense.id, 'assignedTo', e.target.value)}>
+                      <select value={expense.assignedTo} onChange={(e) => onExpenseChange(expense.id, 'assignedTo', e.target.value)} disabled={!canEdit}>
                         <option value="">Select rep</option>
                         {repOptions.map((rep) => (
                           <option key={rep} value={rep}>{rep}</option>
@@ -93,7 +95,7 @@ export const ExpenseTracker = memo(function ExpenseTracker({
                     </label>
                     <label>
                       Comes Out of My MD?
-                      <select value={expense.comesOutOfMyMd ? 'yes' : 'no'} onChange={(e) => onExpenseChange(expense.id, 'comesOutOfMyMd', e.target.value === 'yes')}>
+                      <select value={expense.comesOutOfMyMd ? 'yes' : 'no'} onChange={(e) => onExpenseChange(expense.id, 'comesOutOfMyMd', e.target.value === 'yes')} disabled={!canEdit}>
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                       </select>
@@ -102,9 +104,9 @@ export const ExpenseTracker = memo(function ExpenseTracker({
                   <div className="row between wrap">
                     <label style={{ flex: 1 }}>
                       Notes
-                      <input value={expense.notes} onChange={(e) => onExpenseChange(expense.id, 'notes', e.target.value)} />
+                      <input value={expense.notes} onChange={(e) => onExpenseChange(expense.id, 'notes', e.target.value)} disabled={!canEdit} />
                     </label>
-                    <button className="text-button danger" type="button" onClick={() => onDeleteExpense(expense.id)}>Delete</button>
+                    {canEdit ? <button className="text-button danger" type="button" onClick={() => onDeleteExpense(expense.id)}>Delete</button> : null}
                   </div>
                 </div>
               ))}

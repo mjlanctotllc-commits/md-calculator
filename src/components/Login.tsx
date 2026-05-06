@@ -1,16 +1,13 @@
 import { useState } from 'react';
-import { Role } from '../types';
-
 interface LoginProps {
   supabaseEnabled: boolean;
   statusMessage: string;
-  onLogin: (email: string, password: string, role: Role, mode: 'signin' | 'signup' | 'reset') => void;
+  onLogin: (email: string, password: string, mode: 'signin' | 'signup' | 'reset') => void;
 }
 
 export function Login({ supabaseEnabled, statusMessage, onLogin }: LoginProps) {
   const [email, setEmail] = useState('manager@example.com');
   const [password, setPassword] = useState('password');
-  const [role, setRole] = useState<Role>('manager');
 
   return (
     <div className="auth-shell">
@@ -31,26 +28,15 @@ export function Login({ supabaseEnabled, statusMessage, onLogin }: LoginProps) {
         </label>
 
         <div className="row between">
-          <div className="segmented compact">
-            {(['manager', 'admin'] as Role[]).map((option) => (
-              <button
-                key={option}
-                className={role === option ? 'active' : ''}
-                onClick={() => setRole(option)}
-                type="button"
-              >
-                {option[0].toUpperCase() + option.slice(1)}
-              </button>
-            ))}
-          </div>
-          <button className="text-button" type="button" onClick={() => onLogin(email, password, role, 'reset')}>Forgot password</button>
+          <div className="muted">Role is assigned automatically from your invited email.</div>
+          <button className="text-button" type="button" onClick={() => onLogin(email, password, 'reset')}>Forgot password</button>
         </div>
 
         <div className="row wrap">
-          <button className="primary-button" type="button" onClick={() => onLogin(email, password, role, 'signin')} disabled={!email || !password}>
+          <button className="primary-button" type="button" onClick={() => onLogin(email, password, 'signin')} disabled={!email || !password}>
             Sign in
           </button>
-          <button className="secondary-button" type="button" onClick={() => onLogin(email, password, role, 'signup')} disabled={!email || !password}>
+          <button className="secondary-button" type="button" onClick={() => onLogin(email, password, 'signup')} disabled={!email || !password}>
             Create account
           </button>
         </div>

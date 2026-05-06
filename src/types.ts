@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'manager';
+export type Role = 'owner' | 'manager' | 'rep';
 export type ThemeMode = 'dark' | 'light';
 export type TabKey = 'overview' | 'settings' | 'backend-plan' | 'calculator' | 'actuals';
 export type RowType = 'Team' | 'Individual Rep';
@@ -7,6 +7,16 @@ export type PayType = 'Marketing Deal' | 'Flat Pay' | 'Rookie Pay';
 export interface AuthState {
   email: string;
   role: Role;
+  displayName?: string;
+  orgOwnerId?: string;
+}
+
+export interface TeamMember {
+  email: string;
+  displayName: string;
+  role: Role;
+  parentEmail?: string | null;
+  userId?: string | null;
 }
 
 export interface GlobalSettings {
@@ -90,6 +100,7 @@ export interface ExpenseItem {
   assignedTo: string;
   comesOutOfMyMd: boolean;
   notes: string;
+  createdByEmail?: string;
 }
 
 export interface ActualsState {

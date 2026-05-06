@@ -3,13 +3,15 @@ import { ActualsTracker } from './components/ActualsTracker';
 import { CalculatorTable } from './components/CalculatorTable';
 import { DashboardLayout } from './components/DashboardLayout';
 import { ExpenseTracker } from './components/ExpenseTracker';
+import { TeamAccessManager } from './components/TeamAccessManager';
 import { InputSettings } from './components/InputSettings';
 import { Login } from './components/Login';
 import { PotentialMoneyTracker } from './components/PotentialMoneyTracker';
 import { SummaryCards } from './components/SummaryCards';
 import { createExpense, createPotentialMoney, createRow, defaultAppState, starterScenarios, uid } from './defaults';
-import { getSupabaseSession, loadRemoteState, saveRemoteState, sendReset, signInWithEmail, signOutSupabase, signUpWithEmail, supabaseEnabled } from './lib/supabase';
-import { AppState, AuthState, CalculatorRow, ExpenseItem, GlobalSettings, PotentialMoneyItem, SavedScenario, TabKey, ThemeMode } from './types';
+import { getSupabaseSession, loadRemoteState, saveRemoteState, saveTeamMembers, sendReset, signInWithEmail, signOutSupabase, signUpWithEmail, supabaseEnabled } from './lib/supabase';
+import { canManageOrgState, canManageTeam, getAssignableMembers } from './org';
+import { AppState, AuthState, CalculatorRow, ExpenseItem, GlobalSettings, PotentialMoneyItem, SavedScenario, TabKey, TeamMember, ThemeMode } from './types';
 import { downloadCsv, getDashboardSummary, getSettingsSummary } from './utils';
 
 const AUTH_KEY = 'md-auth';
@@ -47,6 +49,7 @@ export default function App() {
   const [state, setState] = useState<AppState>(defaultAppState);
   const [scenarios, setScenarios] = useState<SavedScenario[]>(starterScenarios(defaultAppState));
   const [statusMessage, setStatusMessage] = useState('Imported your Google Sheet defaults.');
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const hydratedRemote = useRef(false);
 
   useEffect(() => {
@@ -85,16 +88,19 @@ export default function App() {
       if (supabaseEnabled) {
         const session = await getSupabaseSession();
         if (session?.user) {
-          const localAuth = storedAuth ? JSON.parse(storedAuth) as AuthState : { email: session.user.email ?? '', role: 'manager' as const };
-          const remote = await loadRemoteState(session.user.id);
+          const localAuth = storedAuth ? JSON.parse(storedAuth) as AuthState : { email: session.user.email ?? '', role: 'owner' as const };
+          const remote = await loadRemoteState(session.user.id, defaultAppState);
           const nextAuth = {
             email: session.user.email ?? localAuth.email,
             role: remote.auth?.role ?? localAuth.role,
+            displayName: remote.auth?.displayName ?? localAuth.displayName,
+            orgOwnerId: remote.auth?.orgOwnerId ?? localAuth.orgOwnerId,
           } as AuthState;
           setAuth(nextAuth);
           localStorage.setItem(AUTH_KEY, JSON.stringify(nextAuth));
           if (remote.state) setState(normalizeState(remote.state));
           if (remote.scenarios.length) setScenarios(remote.scenarios);
+          if (remote.teamMembers.length) setTeamMembers(remote.teamMembers);
           hydratedRemote.current = true;
           setStatusMessage('Supabase session restored.');
         } else {
@@ -136,6 +142,21 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [auth, scenarios, state]);
 
+
+  useEffect(() => {
+    if (!supabaseEnabled || !auth || !hydratedRemote.current || !canManageTeam(auth.role) || !teamMembers.length) return;
+    const timeout = window.setTimeout(async () => {
+      try {
+        await saveTeamMembers(auth, teamMembers);
+      } catch (error) {
+        console.error(error);
+        setStatusMessage('Team access save failed.');
+      }
+    }, 900);
+
+    return () => window.clearTimeout(timeout);
+  }, [auth, teamMembers]);
+
   const dashboardSummary = useMemo(() => getDashboardSummary(state), [state]);
   const settingsSummary = useMemo(
     () => getSettingsSummary(
@@ -153,17 +174,19 @@ export default function App() {
   );
 
   const updateSettings = useCallback(<K extends keyof GlobalSettings>(key: K, value: GlobalSettings[K]) => {
+    if (!canManageOrgState(auth?.role)) return;
     setState((current) => ({ ...current, settings: { ...current.settings, [key]: value } }));
-  }, []);
+  }, [auth?.role]);
 
   const updateRow = useCallback(<K extends keyof CalculatorRow>(id: string, key: K, value: CalculatorRow[K]) => {
+    if (!canManageOrgState(auth?.role)) return;
     setState((current) => ({
       ...current,
       rows: current.rows.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
     }));
-  }, []);
+  }, [auth?.role]);
 
-  const addRow = useCallback(() => setState((current) => ({
+  const addRow = useCallback(() => { if (!canManageOrgState(auth?.role)) return; return setState((current) => ({
     ...current,
     rows: [
       ...current.rows,
@@ -177,50 +200,58 @@ export default function App() {
         managerVeteranRevenue: current.settings.defaultManagerVeteranRevenue,
       }),
     ],
-  })), []);
+  })); }, [auth?.role]);
 
-  const duplicateRow = useCallback((id: string) => setState((current) => {
+  const duplicateRow = useCallback((id: string) => { if (!canManageOrgState(auth?.role)) return; return setState((current) => {
     const original = current.rows.find((row) => row.id === id);
     if (!original) return current;
     return { ...current, rows: [...current.rows, { ...original, id: uid(), name: `${original.name} Copy` }] };
-  }), []);
+  }); }, [auth?.role]);
 
-  const deleteRow = useCallback((id: string) => setState((current) => ({ ...current, rows: current.rows.filter((row) => row.id !== id) })), []);
+  const deleteRow = useCallback((id: string) => { if (!canManageOrgState(auth?.role)) return; return setState((current) => ({ ...current, rows: current.rows.filter((row) => row.id !== id) })); }, [auth?.role]);
 
   const updateExpense = useCallback(<K extends keyof ExpenseItem>(id: string, key: K, value: ExpenseItem[K]) => {
+    if (!canManageOrgState(auth?.role)) return;
     setState((current) => ({
       ...current,
       expenses: current.expenses.map((expense) => (
         expense.id === id ? { ...expense, [key]: value, category: key === 'category' && value === 'Advances' ? 'Advances' : (key === 'category' ? 'Housing' : expense.category) } : expense
       )),
     }));
-  }, []);
+  }, [auth?.role]);
 
-  const addExpense = useCallback(() => setState((current) => ({
+  const addExpense = useCallback(() => { if (!canManageOrgState(auth?.role)) return; return setState((current) => ({
     ...current,
-    expenses: [...current.expenses, createExpense({ category: 'Housing', name: 'Expense' })],
-  })), []);
-  const deleteExpense = useCallback((id: string) => setState((current) => ({ ...current, expenses: current.expenses.filter((expense) => expense.id !== id) })), []);
+    expenses: [...current.expenses, createExpense({ category: 'Housing', name: 'Expense', createdByEmail: auth?.email ?? '' })],
+  })); }, [auth?.email, auth?.role]);
+  const deleteExpense = useCallback((id: string) => { if (!canManageOrgState(auth?.role)) return; return setState((current) => ({ ...current, expenses: current.expenses.filter((expense) => expense.id !== id) })); }, [auth?.role]);
 
   const updatePotentialMoney = useCallback(<K extends keyof PotentialMoneyItem>(id: string, key: K, value: PotentialMoneyItem[K]) => {
+    if (!canManageOrgState(auth?.role)) return;
     setState((current) => ({
       ...current,
       potentialMoney: current.potentialMoney.map((item) => (item.id === id ? { ...item, [key]: value } : item)),
     }));
-  }, []);
+  }, [auth?.role]);
 
-  const addPotentialMoney = useCallback(() => setState((current) => ({ ...current, potentialMoney: [...current.potentialMoney, createPotentialMoney()] })), []);
-  const deletePotentialMoney = useCallback((id: string) => setState((current) => ({ ...current, potentialMoney: current.potentialMoney.filter((item) => item.id !== id) })), []);
+  const addPotentialMoney = useCallback(() => { if (!canManageOrgState(auth?.role)) return; return setState((current) => ({ ...current, potentialMoney: [...current.potentialMoney, createPotentialMoney()] })); }, [auth?.role]);
+  const deletePotentialMoney = useCallback((id: string) => { if (!canManageOrgState(auth?.role)) return; return setState((current) => ({ ...current, potentialMoney: current.potentialMoney.filter((item) => item.id !== id) })); }, [auth?.role]);
 
   const updateActuals = useCallback(<K extends keyof AppState['actuals']>(key: K, value: AppState['actuals'][K]) => {
+    if (!canManageOrgState(auth?.role)) return;
     setState((current) => ({ ...current, actuals: { ...current.actuals, [key]: value } }));
-  }, []);
+  }, [auth?.role]);
 
-  const repOptions = useMemo(() => state.rows
-    .filter((row) => row.rowType === 'Individual Rep')
-    .map((row) => row.name.trim())
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b)), [state.rows]);
+  const assignableMembers = useMemo(() => teamMembers.length ? getAssignableMembers(auth, teamMembers) : [], [auth, teamMembers]);
+  const repOptions = useMemo(() => {
+    const fallbackOptions = state.rows
+      .filter((row) => row.rowType === 'Individual Rep')
+      .map((row) => row.name.trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    return assignableMembers.length ? assignableMembers.map((member) => member.displayName) : fallbackOptions;
+  }, [assignableMembers, state.rows]);
 
   const headerActions = useMemo(() => (
     <>
@@ -234,7 +265,7 @@ export default function App() {
       <Login
         supabaseEnabled={supabaseEnabled}
         statusMessage={statusMessage}
-        onLogin={async (email, password, role, mode) => {
+        onLogin={async (email, password, mode) => {
           if (mode === 'reset') {
             try {
               if (supabaseEnabled) {
@@ -256,17 +287,16 @@ export default function App() {
               if (!session?.user) {
                 setStatusMessage(mode === 'signup' ? 'Check your email to confirm your account.' : 'Signed in, but no session was returned yet.');
               }
-              const next = { email, role } as AuthState;
+              const remote = session?.user ? await loadRemoteState(session.user.id, defaultAppState) : null;
+              const next = { email, role: remote?.auth?.role ?? 'rep', displayName: remote?.auth?.displayName, orgOwnerId: remote?.auth?.orgOwnerId } as AuthState;
               setAuth(next);
               localStorage.setItem(AUTH_KEY, JSON.stringify(next));
-              if (session?.user) {
-                const remote = await loadRemoteState(session.user.id);
-                if (remote.state) setState(normalizeState(remote.state));
-                if (remote.scenarios.length) setScenarios(remote.scenarios);
-              }
+              if (remote?.state) setState(normalizeState(remote.state));
+              if (remote?.scenarios.length) setScenarios(remote.scenarios);
+              if (remote?.teamMembers.length) setTeamMembers(remote.teamMembers);
               setStatusMessage(mode === 'signup' ? 'Account created.' : 'Signed in with Supabase.');
             } else {
-              const next = { email, role } as AuthState;
+              const next = { email, role: 'owner' } as AuthState;
               setAuth(next);
               localStorage.setItem(AUTH_KEY, JSON.stringify(next));
               setStatusMessage('Signed in locally.');
@@ -303,13 +333,21 @@ export default function App() {
       {activeTab === 'settings' && (
         <>
           <InputSettings settings={state.settings} onChange={updateSettings} summary={settingsSummary} />
+          {canManageTeam(auth?.role) && teamMembers.length > 0 && auth?.email ? (
+            <TeamAccessManager
+              members={teamMembers}
+              ownerEmail={auth.email}
+              onMemberChange={(email, patch) => setTeamMembers((current) => current.map((member) => member.email === email ? { ...member, ...patch } : member))}
+            />
+          ) : null}
           <ExpenseTracker
             expenses={state.expenses}
             repOptions={repOptions}
             useManualExpenseTotal={state.useManualExpenseTotal}
             manualExpenseTotal={state.manualExpenseTotal}
-            onToggleManual={(value) => setState((current) => ({ ...current, useManualExpenseTotal: value }))}
-            onManualChange={(value) => setState((current) => ({ ...current, manualExpenseTotal: value }))}
+            canEdit={canManageOrgState(auth?.role)}
+            onToggleManual={(value) => canManageOrgState(auth?.role) && setState((current) => ({ ...current, useManualExpenseTotal: value }))}
+            onManualChange={(value) => canManageOrgState(auth?.role) && setState((current) => ({ ...current, manualExpenseTotal: value }))}
             onExpenseChange={updateExpense}
             onAddExpense={addExpense}
             onDeleteExpense={deleteExpense}
