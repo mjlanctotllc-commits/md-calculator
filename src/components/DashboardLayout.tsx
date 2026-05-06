@@ -15,7 +15,7 @@ interface DashboardLayoutProps {
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: 'overview', label: 'Overview' },
-  { key: 'settings', label: 'Inputs' },
+  { key: 'settings', label: 'Inputs and Expenses' },
   { key: 'calculator', label: 'Calculator' },
   { key: 'actuals', label: 'YTD Actuals' },
   { key: 'backend-plan', label: 'Backend Plan' },
