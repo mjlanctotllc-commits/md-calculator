@@ -216,6 +216,12 @@ export default function App() {
     setState((current) => ({ ...current, actuals: { ...current.actuals, [key]: value } }));
   }, []);
 
+  const repOptions = useMemo(() => state.rows
+    .filter((row) => row.rowType === 'Individual Rep')
+    .map((row) => row.name.trim())
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b)), [state.rows]);
+
   const headerActions = useMemo(() => (
     <>
       <button className="secondary-button" type="button" onClick={() => downloadCsv(state)}>Export CSV</button>
@@ -299,6 +305,7 @@ export default function App() {
           <InputSettings settings={state.settings} onChange={updateSettings} summary={settingsSummary} />
           <ExpenseTracker
             expenses={state.expenses}
+            repOptions={repOptions}
             useManualExpenseTotal={state.useManualExpenseTotal}
             manualExpenseTotal={state.manualExpenseTotal}
             onToggleManual={(value) => setState((current) => ({ ...current, useManualExpenseTotal: value }))}
@@ -328,6 +335,7 @@ export default function App() {
           rows={state.rows}
           derivedRows={dashboardSummary.derivedRows}
           settings={state.settings}
+          expenses={state.expenses}
           onRowChange={updateRow}
           onAddRow={addRow}
           onDuplicateRow={duplicateRow}

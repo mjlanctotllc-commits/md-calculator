@@ -3,6 +3,7 @@ import { ExpenseItem } from '../types';
 
 interface ExpenseTrackerProps {
   expenses: ExpenseItem[];
+  repOptions: string[];
   useManualExpenseTotal: boolean;
   manualExpenseTotal: number;
   onToggleManual: (value: boolean) => void;
@@ -27,6 +28,7 @@ const expenseCategories: ExpenseItem['category'][] = ['Housing', 'Advances'];
 
 export const ExpenseTracker = memo(function ExpenseTracker({
   expenses,
+  repOptions,
   useManualExpenseTotal,
   manualExpenseTotal,
   onToggleManual,
@@ -82,7 +84,12 @@ export const ExpenseTracker = memo(function ExpenseTracker({
                     </label>
                     <label>
                       Assign Rep In Your Downline
-                      <input value={expense.assignedTo} onChange={(e) => onExpenseChange(expense.id, 'assignedTo', e.target.value)} />
+                      <select value={expense.assignedTo} onChange={(e) => onExpenseChange(expense.id, 'assignedTo', e.target.value)}>
+                        <option value="">Select rep</option>
+                        {repOptions.map((rep) => (
+                          <option key={rep} value={rep}>{rep}</option>
+                        ))}
+                      </select>
                     </label>
                     <label>
                       Comes Out of My MD?

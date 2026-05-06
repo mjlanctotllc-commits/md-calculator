@@ -1,11 +1,12 @@
 import { memo } from 'react';
-import { CalculatorRow, DerivedRowMetrics, GlobalSettings, PayType, RowType } from '../types';
+import { CalculatorRow, DerivedRowMetrics, ExpenseItem, GlobalSettings, PayType, RowType } from '../types';
 import { currency, percent } from '../utils';
 
 interface CalculatorTableProps {
   rows: CalculatorRow[];
   derivedRows: DerivedRowMetrics[];
   settings: GlobalSettings;
+  expenses: ExpenseItem[];
   onRowChange: <K extends keyof CalculatorRow>(id: string, key: K, value: CalculatorRow[K]) => void;
   onAddRow: () => void;
   onDuplicateRow: (id: string) => void;
@@ -18,6 +19,7 @@ const rowTypes: RowType[] = ['Team', 'Individual Rep'];
 const CalculatorRowCard = memo(function CalculatorRowCard({
   row,
   derived,
+  expenses,
   onRowChange,
   onDuplicateRow,
   onDeleteRow,
@@ -25,10 +27,16 @@ const CalculatorRowCard = memo(function CalculatorRowCard({
   row: CalculatorRow;
   derived: DerivedRowMetrics;
   settings: GlobalSettings;
+  expenses: ExpenseItem[];
   onRowChange: <K extends keyof CalculatorRow>(id: string, key: K, value: CalculatorRow[K]) => void;
   onDuplicateRow: (id: string) => void;
   onDeleteRow: (id: string) => void;
 }) {
+  const assignedExpenses = expenses.filter((expense) => expense.assignedTo === row.name);
+  const assignedExpenseTotal = assignedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const assignedHousingTotal = assignedExpenses.filter((expense) => expense.category === 'Housing').reduce((sum, expense) => sum + expense.amount, 0);
+  const assignedAdvancesTotal = assignedExpenses.filter((expense) => expense.category === 'Advances').reduce((sum, expense) => sum + expense.amount, 0);
+
   return (
     <article className="calculator-row-card stable-card">
       <div className="calculator-row-header">
@@ -137,6 +145,12 @@ const CalculatorRowCard = memo(function CalculatorRowCard({
         </label>
       </div>
 
+      <div className="row wrap" style={{ gap: 12, marginBottom: 12 }}>
+        <div className="readonly" style={{ minWidth: 220 }}>Assigned housing: {currency(assignedHousingTotal)}</div>
+        <div className="readonly" style={{ minWidth: 220 }}>Assigned advances: {currency(assignedAdvancesTotal)}</div>
+        <div className="readonly success" style={{ minWidth: 220 }}>Total assigned expenses: {currency(assignedExpenseTotal)}</div>
+      </div>
+
       <label>
         Notes
         <input value={row.notes} onChange={(e) => onRowChange(row.id, 'notes', e.target.value)} />
@@ -145,7 +159,7 @@ const CalculatorRowCard = memo(function CalculatorRowCard({
   );
 });
 
-export const CalculatorTable = memo(function CalculatorTable({ rows, derivedRows, settings, onRowChange, onAddRow, onDuplicateRow, onDeleteRow }: CalculatorTableProps) {
+export const CalculatorTable = memo(function CalculatorTable({ rows, derivedRows, settings, expenses, onRowChange, onAddRow, onDuplicateRow, onDeleteRow }: CalculatorTableProps) {
   return (
     <section className="card section-card stable-card">
       <div className="section-heading sticky-header">
@@ -164,6 +178,7 @@ export const CalculatorTable = memo(function CalculatorTable({ rows, derivedRows
             row={row}
             derived={derivedRows[index]}
             settings={settings}
+            expenses={expenses}
             onRowChange={onRowChange}
             onDuplicateRow={onDuplicateRow}
             onDeleteRow={onDeleteRow}
