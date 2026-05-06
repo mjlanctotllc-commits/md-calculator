@@ -17,7 +17,7 @@ const APP_KEY = 'md-app-state';
 const SCENARIO_KEY = 'md-scenarios';
 const THEME_KEY = 'md-theme';
 const IMPORT_VERSION_KEY = 'md-import-version';
-const CURRENT_IMPORT_VERSION = '2026-import-v3';
+const CURRENT_IMPORT_VERSION = '2026-import-v4';
 
 const getGoalRevenueTotal = (appState: AppState) => appState.rows.reduce((sum, row) => sum + row.goalRevenue, 0);
 const shouldRefreshImportedDefaults = (appState: AppState) => (
@@ -36,7 +36,7 @@ const normalizeState = (appState: AppState): AppState => ({
   },
   expenses: (appState.expenses ?? defaultAppState.expenses).map((expense) => ({
     ...expense,
-    category: 'Housing',
+    category: expense.category === 'Advances' ? 'Advances' : 'Housing',
   })),
 });
 
@@ -191,14 +191,14 @@ export default function App() {
     setState((current) => ({
       ...current,
       expenses: current.expenses.map((expense) => (
-        expense.id === id ? { ...expense, [key]: value, category: 'Housing' } : expense
+        expense.id === id ? { ...expense, [key]: value, category: key === 'category' && value === 'Advances' ? 'Advances' : (key === 'category' ? 'Housing' : expense.category) } : expense
       )),
     }));
   }, []);
 
   const addExpense = useCallback(() => setState((current) => ({
     ...current,
-    expenses: [...current.expenses, createExpense({ category: 'Housing', name: 'Housing expense' })],
+    expenses: [...current.expenses, createExpense({ category: 'Housing', name: 'Expense' })],
   })), []);
   const deleteExpense = useCallback((id: string) => setState((current) => ({ ...current, expenses: current.expenses.filter((expense) => expense.id !== id) })), []);
 

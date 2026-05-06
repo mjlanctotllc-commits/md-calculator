@@ -23,6 +23,8 @@ interface ExpenseTrackerProps {
   projectedOverrideEarnings: number;
 }
 
+const expenseCategories: ExpenseItem['category'][] = ['Housing', 'Advances'];
+
 export const ExpenseTracker = memo(function ExpenseTracker({
   expenses,
   useManualExpenseTotal,
@@ -39,7 +41,7 @@ export const ExpenseTracker = memo(function ExpenseTracker({
         <div className="section-heading">
           <div>
             <div className="eyebrow premium-eyebrow">Expense tracker</div>
-            <h3>Housing expenses</h3>
+            <h3>Expenses</h3>
           </div>
           <div className="toggle-row">
             <span>Manual total</span>
@@ -58,14 +60,22 @@ export const ExpenseTracker = memo(function ExpenseTracker({
         ) : (
           <>
             <div className="row between wrap">
-              <p className="muted">Track housing expenses and assign each one to a rep in your downline.</p>
-              <button className="primary-button" type="button" onClick={onAddExpense}>Add housing expense</button>
+              <p className="muted">Track housing and advances expenses, and assign each one to a rep in your downline.</p>
+              <button className="primary-button" type="button" onClick={onAddExpense}>Add expense</button>
             </div>
             <div className="stack gap-md">
-              {expenses.length === 0 && <div className="muted expense-empty-state">No housing expenses yet.</div>}
+              {expenses.length === 0 && <div className="muted expense-empty-state">No expenses yet.</div>}
               {expenses.map((expense) => (
                 <div key={expense.id} className="expense-line-item stable-card">
                   <div className="expense-line-grid">
+                    <label>
+                      Category
+                      <select value={expense.category} onChange={(e) => onExpenseChange(expense.id, 'category', e.target.value as ExpenseItem['category'])}>
+                        {expenseCategories.map((category) => (
+                          <option key={category} value={category}>{category}</option>
+                        ))}
+                      </select>
+                    </label>
                     <label>
                       Amount
                       <input type="number" value={expense.amount} onChange={(e) => onExpenseChange(expense.id, 'amount', Number(e.target.value))} />
